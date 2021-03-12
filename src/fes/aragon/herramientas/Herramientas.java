@@ -65,5 +65,9 @@ public class Herramientas {
     public void setColumnaLinea(int columnaLinea) {
         this.columnaLinea = columnaLinea;
     }
+    
+    public int getlongitudLinea() {
+        return longitudLinea;
+    }
 }
     

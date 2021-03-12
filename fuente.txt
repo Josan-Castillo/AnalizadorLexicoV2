@@ -1,3 +1,8 @@
-:=
-file:=
-sapo
+fiel :=; !=
+23.32 = 21
+<= fin
+< 34/r
+"
+> fcc * 64.9
+>= +hda
+(gdjja)

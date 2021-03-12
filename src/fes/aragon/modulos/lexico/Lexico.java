@@ -47,9 +47,9 @@ public class Lexico {
         this.palabrasReservadas[2] = "entero";
         this.palabrasReservadas[3] = "real";
         this.palabrasReservadas[4] = "mientras";
-        this.palabrasReservadas[5] = "fin-mientras";
+        this.palabrasReservadas[5] = "finmientras";
         this.palabrasReservadas[6] = "si";
-        this.palabrasReservadas[7] = "si-no";
+        this.palabrasReservadas[7] = "sino";
     }
     public Token siguienteToken(){
         boolean tokenEncontrado = false;
@@ -62,20 +62,42 @@ public class Lexico {
                 case 0:
                     if(simbolo == ' ' || simbolo == '\t'){
                         this.estado = 0;
-                        this.numeroLinea++;
-                        if(numeroLinea<this.codigo.size()){
-                            hr.setLinea(codigo.get(this.numeroLinea));
-                            hr.setColumnaLinea(0);
+                        if(hr.getColumnaLinea() < hr.getlongitudLinea() ){
                             simbolo = hr.siguienteCaracter();
                         } else {
-                            break;
-                        }   
-                    } else if (simbolo == ':'){
-                        this.estado = 9;
+                            this.numeroLinea++;
+                            if(numeroLinea<this.codigo.size()){
+                                hr.setLinea(codigo.get(this.numeroLinea));
+                                hr.setColumnaLinea(0);
+                                simbolo = hr.siguienteCaracter();
+                            } else {
+                                break;   
+                            }
+                        }
                     } else if (RangoDeValores.es_Letra(simbolo)){
                         this.estado = 1;
-                    //} else if (RangoDeValores.es_NumeroEnteroPositivo(simbolo)){
-                        //this.estado = 3;
+                    } else if (RangoDeValores.es_NumeroEnteroPositivo(simbolo)){
+                        this.estado = 3;
+                    } else if(simbolo == ';'){
+                        this.estado = 8;
+                    } else if (simbolo == ':'){
+                        this.estado = 9;
+                    } else if(simbolo == '('){
+                        this.estado = 11;
+                    } else if(simbolo == ')'){
+                        this.estado = 12;
+                    } else if((simbolo=='!')||(simbolo=='<')||(simbolo=='>')){
+                        this.estado=13;
+                    } else if(simbolo=='='){
+                        this.estado=16;
+                    } else if((simbolo=='/')||(simbolo == '+')||(simbolo == '*')||(simbolo == '-')){
+                        this.estado=17;
+                    } else {
+                        this.estado = 0;
+                        simbolo=hr.siguienteCaracter();
+                        this.numeroErrores++;
+                        ErrorLexico error = new ErrorLexico("El simbolo no existe en nuestro lenguaje", hr.getColumnaLinea()+1, numeroLinea + 1);
+                        this.errores.add(error);
                     }
                     break;
                 case 1:
@@ -92,7 +114,7 @@ public class Lexico {
                     tokenEncontrado = true;
                     t = IdentificadorDeAsignarId(palabra);
                     break;
-                /*case 3:
+                case 3:
                     do {
                         if(RangoDeValores.es_NumeroEnteroPositivo(simbolo)){
                             palabra += simbolo;
@@ -108,10 +130,50 @@ public class Lexico {
                 case 4:
                     this.estado=0;
                     tokenEncontrado = true;
-                    t = IdentificadorDeAsignarId(palabra);
+                    s = new Simbolo(3, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, palabra, "", false, false);
+                    simbolos.add(s);
+                    t = new Token(3, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, this.indiceSimbolos++, palabra, "numero");
+                    tokenReconocidos += t.getToken()+"\n";
                     break;
                 case 5:
-                    */
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    if(RangoDeValores.es_NumeroEnteroPositivo(simbolo)){
+                        palabra += simbolo;
+                        this.estado = 6;
+                    }
+                    else {
+                        this.estado = 0;
+                        this.numeroErrores++;
+                        ErrorLexico error = new ErrorLexico("Dato numerico mal estructurado", hr.getColumnaLinea()+1, numeroLinea + 1);
+                        this.errores.add(error);
+                    }
+                    break;
+                case 6:
+                    do{
+                        simbolo = hr.siguienteCaracter();
+                        if(RangoDeValores.es_NumeroEnteroPositivo(simbolo)){
+                           palabra += simbolo; 
+                        }
+                    } while(RangoDeValores.es_NumeroEnteroPositivo(simbolo));
+                    this.estado = 7;
+                    break;
+                case 7:
+                    this.estado=0;
+                    tokenEncontrado = true;
+                    s = new Simbolo(3, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, palabra, "", false, false);
+                    simbolos.add(s);
+                    t = new Token(3, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, this.indiceSimbolos++, palabra, "numero");
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 8:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, palabra);
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
                 case 9:
                     palabra+=simbolo;
                     simbolo = hr.siguienteCaracter();
@@ -130,6 +192,63 @@ public class Lexico {
                     palabra += simbolo;
                     simbolo = hr.siguienteCaracter();
                     t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, palabra);
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 11:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, palabra);
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 12:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, palabra);
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 13:
+                    palabra+=simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    if(simbolo == '='){
+                       this.estado=15; 
+                    } else {
+                        this.estado=14;
+                    }
+                    break;
+                case 14:
+                    this.estado=0;
+                    tokenEncontrado = true;
+                    s = new Simbolo(2, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, palabra, "", false, false);
+                    simbolos.add(s);
+                    t = new Token(2, ((hr.getColumnaLinea()-palabra.length())+1), numeroLinea+1, this.indiceSimbolos++, palabra, "literal");
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 15:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, "comparacion");
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 16:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, "comparacion");
+                    tokenReconocidos += t.getToken()+"\n";
+                    break;
+                case 17:
+                    this.estado = 0;
+                    tokenEncontrado = true;
+                    palabra += simbolo;
+                    simbolo = hr.siguienteCaracter();
+                    t = new Token(0, hr.getColumnaLinea()+1, numeroLinea+1, -1, palabra, "operador");
                     tokenReconocidos += t.getToken()+"\n";
                     break;
             }
@@ -189,7 +308,6 @@ public class Lexico {
     public ArrayList<ErrorLexico> getErrores() {
         return errores;
     }
-
     public void setErrores(ArrayList<ErrorLexico> errores) {
         this.errores = errores;
     }
